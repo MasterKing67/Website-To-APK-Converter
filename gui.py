@@ -1,212 +1,139 @@
-"""
-Shiny Website To APK Converter
-GUI
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
 
-Author: Shiny Studios
-"""
-
-from PySide6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QFileDialog,
-    QMessageBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGroupBox,
-)
+from generator import generate_project
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class ShinyCalcGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Shiny Calc Project Generator")
+        self.root.geometry("600x420")
+        self.root.resizable(False, False)
 
-        self.setWindowTitle("Shiny Website To APK Converter")
-        self.resize(700, 500)
+        self.create_widgets()
 
-        self.setup_ui()
-        self.apply_style()
+    def create_widgets(self):
+        title = tk.Label(
+            self.root,
+            text="Shiny Calc Project Generator",
+            font=("Segoe UI", 18, "bold")
+        )
+        title.pack(pady=15)
 
-    def setup_ui(self):
-        central = QWidget()
-        self.setCentralWidget(central)
+        frame = ttk.Frame(self.root, padding=15)
+        frame.pack(fill="both", expand=True)
 
-        layout = QVBoxLayout(central)
-        layout.setSpacing(15)
+        # App Name
+        ttk.Label(frame, text="App Name").grid(row=0, column=0, sticky="w", pady=5)
 
-        # -----------------------------
-        # Title
-        # -----------------------------
-        title = QLabel("🌐 Shiny Website To APK Converter")
-        title.setObjectName("title")
-        layout.addWidget(title)
+        self.app_name = ttk.Entry(frame, width=45)
+        self.app_name.insert(0, "Shiny Calc")
+        self.app_name.grid(row=0, column=1, pady=5)
 
-        # -----------------------------
-        # Website Settings
-        # -----------------------------
-        website_box = QGroupBox("Website")
+        # Package Name
+        ttk.Label(frame, text="Package Name").grid(row=1, column=0, sticky="w", pady=5)
 
-        website_layout = QVBoxLayout()
+        self.package_name = ttk.Entry(frame, width=45)
+        self.package_name.insert(0, "com.shiny.calculator")
+        self.package_name.grid(row=1, column=1, pady=5)
 
-        website_layout.addWidget(QLabel("Website URL"))
-        self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("https://example.com")
-        website_layout.addWidget(self.url_input)
+        # Website URL
+        ttk.Label(frame, text="Website URL").grid(row=2, column=0, sticky="w", pady=5)
 
-        website_box.setLayout(website_layout)
-        layout.addWidget(website_box)
+        self.website_url = ttk.Entry(frame, width=45)
+        self.website_url.insert(0, "https://example.com")
+        self.website_url.grid(row=2, column=1, pady=5)
 
-        # -----------------------------
-        # App Settings
-        # -----------------------------
-        app_box = QGroupBox("Application")
-
-        app_layout = QVBoxLayout()
-
-        app_layout.addWidget(QLabel("App Name"))
-        self.app_name = QLineEdit()
-        self.app_name.setPlaceholderText("My Website")
-        app_layout.addWidget(self.app_name)
-
-        app_layout.addWidget(QLabel("Package Name"))
-        self.package_name = QLineEdit()
-        self.package_name.setPlaceholderText("com.shiny.myapp")
-        app_layout.addWidget(self.package_name)
-
-        app_box.setLayout(app_layout)
-        layout.addWidget(app_box)
-
-        # -----------------------------
-        # Icon
-        # -----------------------------
-        icon_box = QGroupBox("Application Icon")
-
-        icon_layout = QHBoxLayout()
-
-        self.icon_path = QLineEdit()
-        self.icon_path.setPlaceholderText("Choose an icon...")
-
-        browse_icon = QPushButton("Browse")
-        browse_icon.clicked.connect(self.choose_icon)
-
-        icon_layout.addWidget(self.icon_path)
-        icon_layout.addWidget(browse_icon)
-
-        icon_box.setLayout(icon_layout)
-        layout.addWidget(icon_box)
-
-        # -----------------------------
         # Output Folder
-        # -----------------------------
-        output_box = QGroupBox("Output Folder")
+        ttk.Label(frame, text="Output Folder").grid(row=3, column=0, sticky="w", pady=5)
 
-        output_layout = QHBoxLayout()
+        self.output_folder = ttk.Entry(frame, width=35)
+        self.output_folder.grid(row=3, column=1, sticky="w")
 
-        self.output_path = QLineEdit()
-        self.output_path.setPlaceholderText("Choose output folder...")
+        ttk.Button(
+            frame,
+            text="Browse",
+            command=self.browse_folder
+        ).grid(row=3, column=2, padx=5)
 
-        browse_output = QPushButton("Browse")
-        browse_output.clicked.connect(self.choose_output)
-
-        output_layout.addWidget(self.output_path)
-        output_layout.addWidget(browse_output)
-
-        output_box.setLayout(output_layout)
-        layout.addWidget(output_box)
-
-        # -----------------------------
         # Generate Button
-        # -----------------------------
-        self.generate_button = QPushButton("🚀 Generate Android Project")
-        self.generate_button.clicked.connect(self.generate_project)
+        ttk.Button(
+            self.root,
+            text="Generate Project",
+            command=self.generate,
+        ).pack(pady=20)
 
-        layout.addWidget(self.generate_button)
-
-    # ---------------------------------
-
-    def choose_icon(self):
-        file, _ = QFileDialog.getOpenFileName(
-            self,
-            "Choose Icon",
-            "",
-            "Images (*.png *.jpg *.jpeg *.ico)"
+        self.status = tk.Label(
+            self.root,
+            text="Ready",
+            fg="green"
         )
+        self.status.pack()
 
-        if file:
-            self.icon_path.setText(file)
-
-    # ---------------------------------
-
-    def choose_output(self):
-        folder = QFileDialog.getExistingDirectory(
-            self,
-            "Choose Output Folder"
-        )
-
+    def browse_folder(self):
+        folder = filedialog.askdirectory()
         if folder:
-            self.output_path.setText(folder)
+            self.output_folder.delete(0, tk.END)
+            self.output_folder.insert(0, folder)
 
-    # ---------------------------------
+    def generate(self):
+        app_name = self.app_name.get().strip()
+        package = self.package_name.get().strip()
+        url = self.website_url.get().strip()
+        output = self.output_folder.get().strip()
 
-    def generate_project(self):
-        QMessageBox.information(
-            self,
-            "Coming Soon",
-            "The project generator will be added next!"
-        )
+        if not app_name:
+            messagebox.showerror("Error", "Please enter an app name.")
+            return
 
-    # ---------------------------------
+        if not package:
+            messagebox.showerror("Error", "Please enter a package name.")
+            return
 
-    def apply_style(self):
-        self.setStyleSheet("""
-        QMainWindow {
-            background: #1E1E1E;
-        }
+        if not url:
+            messagebox.showerror("Error", "Please enter a website URL.")
+            return
 
-        QLabel {
-            color: white;
-            font-size: 11pt;
-        }
+        if not output:
+            messagebox.showerror("Error", "Please choose an output folder.")
+            return
 
-        #title {
-            font-size: 20pt;
-            font-weight: bold;
-            color: #4DA3FF;
-        }
+        try:
+            project = generate_project(
+                app_name,
+                package,
+                url,
+                output
+            )
 
-        QGroupBox {
-            color: white;
-            border: 1px solid #3A3A3A;
-            border-radius: 8px;
-            margin-top: 8px;
-            padding: 10px;
-            font-weight: bold;
-        }
+            self.status.config(
+                text="Project created successfully!",
+                fg="green"
+            )
 
-        QLineEdit {
-            background: #2B2B2B;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 5px;
-            padding: 8px;
-        }
+            messagebox.showinfo(
+                "Success",
+                f"Project created!\n\n{project}"
+            )
 
-        QPushButton {
-            background: #2D89EF;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px;
-            font-weight: bold;
-        }
+        except Exception as e:
+            self.status.config(
+                text="Generation failed.",
+                fg="red"
+            )
 
-        QPushButton:hover {
-            background: #409EFF;
-        }
+            messagebox.showerror(
+                "Error",
+                str(e)
+            )
 
-        QPushButton:pressed {
-            background: #1B6EC2;
-        }
-        """)
+
+def start_gui():
+    root = tk.Tk()
+    ShinyCalcGUI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    start_gui()
